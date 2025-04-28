@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Topic Picker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .level-selection {
+            margin-bottom: 30px;
+        }
+        .level-btn {
+            background-color: #f0f0f0;
+            color: #333;
+            border: 2px solid #ddd;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0 10px;
+        }
+        .level-btn.active {
+            background-color: #0066cc;
+            color: white;
+            border-color: #0055aa;
+        }
+        .number-display {
+            font-size: 100px;
+            font-weight: bold;
+            color: #0066cc;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .btn {
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 10px;
+        }
+        .btn:hover {
+            background-color: #0055aa;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .animation {
+            animation: spin 0.5s ease-out;
+        }
+        @keyframes spin {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .topics-container {
+            margin-top: 30px;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        .topic {
+            padding: 5px 10px;
+            border-radius: 3px;
+            margin-bottom: 5px;
+        }
+        .topic.selected {
+            background-color: #e6f2ff;
+            font-weight: bold;
+        }
+        .level-description {
+            margin-top: 15px;
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Random Topic Picker</h1>
+        
+        <div class="level-selection">
+            <h3>Select Difficulty Level:</h3>
+            <button class="level-btn active" id="beginnerBtn">Beginner</button>
+            <button class="level-btn" id="mediumBtn">Medium</button>
+            <button class="level-btn" id="advancedBtn">Advanced</button>
+            
+            <div class="level-description" id="levelDescription">
+                Start with 60-second talks on familiar topics
+            </div>
+        </div>
+        
+        <div class="number-display" id="numberDisplay">?</div>
+        <button class="btn" id="pickButton">Pick a Topic</button>
+        
+        <div class="topics-container" id="topicsContainer">
+            <h3 id="topicsHeader">Beginner Topics:</h3>
+            <div id="topicsList">
+                <!-- Topics will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Topic lists for different levels
+        const topicsByLevel = {
+            beginner: [
+                "The most useful skill you've ever learned",
+                "Your ideal morning routine",
+                "A book or movie that changed your perspective",
+                "Your favorite place to relax",
+                "A technological advance you're excited about",
+                "The best advice you've ever received",
+                "Your thoughts on social media",
+                "A hobby you'd like to try",
+                "Your favorite meal and why you enjoy it",
+                "How you stay motivated",
+                "A challenge you've overcome",
+                "Your ideal vacation destination",
+                "Remote work vs. office work",
+                "A historical figure you admire",
+                "The importance of friendship",
+                "How you handle stress",
+                "Your favorite season and why",
+                "A recent news story that interested you",
+                "Changes you'd make to education",
+                "The role of exercise in your life"
+            ],
+            medium: [
+                "The impact of artificial intelligence on jobs",
+                "How travel shapes our worldview",
+                "The pros and cons of social media",
+                "Balancing career ambitions with personal life",
+                "The future of education",
+                "Handling criticism constructively",
+                "Is privacy becoming obsolete?",
+                "Personal responsibility vs. systemic change",
+                "The value of diversity in organizations",
+                "Defining success beyond material wealth",
+                "The ethics of genetic engineering",
+                "Climate change: individual vs. collective action",
+                "The role of arts in society",
+                "How technology affects human connections",
+                "Should healthcare be a universal right?",
+                "How to foster innovation in teams",
+                "The importance of financial literacy",
+                "Digital minimalism in a connected world",
+                "The changing nature of work",
+                "Building resilience during difficult times"
+            ],
+            advanced: [
+                "Should we regulate artificial intelligence? How?",
+                "The philosophical implications of consciousness",
+                "Balancing national security with individual privacy",
+                "The future of democracy in a digital age",
+                "How should we address global wealth inequality?",
+                "The ethics of extending human lifespan",
+                "Is space exploration worth the investment?",
+                "Free speech: where should limits be drawn?",
+                "Nature vs. nurture in human development",
+                "The role of government in addressing climate change",
+                "Should we implement universal basic income?",
+                "The ethics of genetic enhancement in humans",
+                "How to balance technological progress with human values",
+                "Are social media platforms responsible for content?",
+                "The future of education in an AI world",
+                "Cultural appropriation vs. cultural appreciation",
+                "The impact of algorithmic decision-making on society",
+                "Should we have a right to disconnect from work?",
+                "The ethics of animal rights and consumption",
+                "How should we address the crisis of meaning in modern life?"
+            ]
+        };
+        
+        const levelDescriptions = {
+            beginner: "Start with 60-second talks on familiar topics",
+            medium: "Aim for 2-minute talks with multiple perspectives",
+            advanced: "Challenge yourself with 3-minute structured arguments"
+        };
+
+        // Get elements
+        const numberDisplay = document.getElementById('numberDisplay');
+        const pickButton = document.getElementById('pickButton');
+        const topicsList = document.getElementById('topicsList');
+        const topicsHeader = document.getElementById('topicsHeader');
+        const levelDescription = document.getElementById('levelDescription');
+        
+        // Level buttons
+        const beginnerBtn = document.getElementById('beginnerBtn');
+        const mediumBtn = document.getElementById('mediumBtn');
+        const advancedBtn = document.getElementById('advancedBtn');
+        
+        // Current level and topics
+        let currentLevel = 'beginner';
+        let currentTopics = topicsByLevel[currentLevel];
+        
+        // Display topics for the current level
+        function displayTopics() {
+            topicsList.innerHTML = '';
+            topicsHeader.textContent = `${currentLevel.charAt(0).toUpperCase() + currentLevel.slice(1)} Topics:`;
+            
+            currentTopics.forEach((topic, index) => {
+                const topicElement = document.createElement('div');
+                topicElement.classList.add('topic');
+                topicElement.textContent = `${index + 1}. ${topic}`;
+                topicElement.id = `topic-${index + 1}`;
+                topicsList.appendChild(topicElement);
+            });
+        }
+        
+        // Initialize with beginner topics
+        displayTopics();
+        
+        // Level selection handlers
+        beginnerBtn.addEventListener('click', () => {
+            setActiveLevel('beginner');
+        });
+        
+        mediumBtn.addEventListener('click', () => {
+            setActiveLevel('medium');
+        });
+        
+        advancedBtn.addEventListener('click', () => {
+            setActiveLevel('advanced');
+        });
+        
+        function setActiveLevel(level) {
+            // Update active button
+            [beginnerBtn, mediumBtn, advancedBtn].forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (level === 'beginner') {
+                beginnerBtn.classList.add('active');
+            } else if (level === 'medium') {
+                mediumBtn.classList.add('active');
+            } else if (level === 'advanced') {
+                advancedBtn.classList.add('active');
+            }
+            
+            // Update current level and topics
+            currentLevel = level;
+            currentTopics = topicsByLevel[level];
+            levelDescription.textContent = levelDescriptions[level];
+            
+            // Reset display
+            numberDisplay.textContent = '?';
+            
+            // Update topics list
+            displayTopics();
+        }
+        
+        // Pick a random number function
+        function pickRandomNumber() {
+            // Disable the button temporarily
+            pickButton.disabled = true;
+            
+            // Start with a question mark
+            numberDisplay.textContent = "?";
+            
+            // Remove any existing selection
+            const selectedTopic = document.querySelector('.topic.selected');
+            if (selectedTopic) {
+                selectedTopic.classList.remove('selected');
+            }
+            
+            // Create a "spinning" effect with multiple numbers
+            let counter = 0;
+            const maxIterations = 20;
+            const interval = setInterval(() => {
+                const randomNum = Math.floor(Math.random() * currentTopics.length) + 1;
+                numberDisplay.textContent = randomNum;
+                
+                counter++;
+                if (counter >= maxIterations) {
+                    clearInterval(interval);
+                    
+                    // Get final number
+                    const finalNumber = parseInt(numberDisplay.textContent);
+                    
+                    // Add animation class
+                    numberDisplay.classList.add('animation');
+                    
+                    // Highlight the selected topic
+                    const selectedTopicElement = document.getElementById(`topic-${finalNumber}`);
+                    if (selectedTopicElement) {
+                        selectedTopicElement.classList.add('selected');
+                        
+                        // Scroll to the selected topic
+                        selectedTopicElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    
+                    // Re-enable the button after animation
+                    setTimeout(() => {
+                        pickButton.disabled = false;
+                        numberDisplay.classList.remove('animation');
+                    }, 500);
+                }
+            }, 50);
+        }
+        
+        // Add event listener to the button
+        pickButton.addEventListener('click', pickRandomNumber);
+    </script>
+</body>
+</html>
