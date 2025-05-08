@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Random Topic Picker</title>
+    <title>Random Topic Picker with Timer</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -104,31 +104,134 @@
             font-style: italic;
             color: #666;
         }
+
+        /* Tab Styles */
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            border-radius: 10px 10px 0 0;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+            width: 50%;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #0066cc;
+            color: white;
+        }
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            background-color: white;
+        }
+
+        /* Timer Styles */
+        .timer-display {
+            font-size: 80px;
+            font-weight: bold;
+            color: #0066cc;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .timer-settings {
+            margin: 20px 0;
+        }
+        .timer-settings label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .timer-settings input {
+            width: 80px;
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Random Topic Picker</h1>
-        
-        <div class="level-selection">
-            <h3>Select Difficulty Level:</h3>
-            <button class="level-btn active" id="beginnerBtn">Beginner</button>
-            <button class="level-btn" id="mediumBtn">Medium</button>
-            <button class="level-btn" id="advancedBtn">Advanced</button>
-            
-            <div class="level-description" id="levelDescription">
-                Start with 60-second talks on familiar topics
+        <h1>Random Topic Picker with Timer</h1>
+
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'TopicTab')">Topics</button>
+            <button class="tablinks" onclick="openTab(event, 'TimerTab')">Timer</button>
+        </div>
+
+        <div id="TopicTab" class="tabcontent" style="display: block;">
+            <div class="level-selection">
+                <h3>Select Difficulty Level:</h3>
+                <button class="level-btn active" id="beginnerBtn">Beginner</button>
+                <button class="level-btn" id="mediumBtn">Medium</button>
+                <button class="level-btn" id="advancedBtn">Advanced</button>
+
+                <div class="level-description" id="levelDescription">
+                    Start with 60-second talks on familiar topics
+                </div>
+            </div>
+
+            <div class="number-display" id="numberDisplay">?</div>
+            <button class="btn" id="pickButton">Pick a Topic</button>
+            <button class="btn" id="startPrepBtn">Start Prep Timer</button>
+
+            <div class="topics-container" id="topicsContainer">
+                <h3 id="topicsHeader">Beginner Topics:</h3>
+                <div id="topicsList">
+                    <!-- Topics will be inserted here -->
+                </div>
             </div>
         </div>
-        
-        <div class="number-display" id="numberDisplay">?</div>
-        <button class="btn" id="pickButton">Pick a Topic</button>
-        
-        <div class="topics-container" id="topicsContainer">
-            <h3 id="topicsHeader">Beginner Topics:</h3>
-            <div id="topicsList">
-                <!-- Topics will be inserted here -->
+
+        <div id="TimerTab" class="tabcontent">
+            <div class="timer-settings">
+                <label for="prepTime">Preparation Time (seconds):</label>
+                <input type="number" id="prepTime" value="30" min="5" max="300">
+
+                <label for="talkTime">Talk Time (seconds):</label>
+                <input type="number" id="talkTime" value="60" min="10" max="600">
             </div>
+
+            <div class="timer-display" id="timerDisplay">00:00</div>
+
+            <div class="timer-controls">
+                <button class="btn" id="startTimerBtn">Start</button>
+                <button class="btn" id="pauseTimerBtn" disabled>Pause</button>
+                <button class="btn" id="resetTimerBtn">Reset</button>
+            </div>
+
+            <div id="timerStatus">Ready to start</div>
         </div>
     </div>
 
@@ -202,34 +305,58 @@
                 "How should we address the crisis of meaning in modern life?"
             ]
         };
-        
+
         const levelDescriptions = {
             beginner: "Start with 60-second talks on familiar topics",
             medium: "Aim for 2-minute talks with multiple perspectives",
             advanced: "Challenge yourself with 3-minute structured arguments"
         };
 
-        // Get elements
+        const levelTimes = {
+            beginner: 60,
+            medium: 120,
+            advanced: 180
+        };
+
+        // Get elements for topic picker
         const numberDisplay = document.getElementById('numberDisplay');
         const pickButton = document.getElementById('pickButton');
         const topicsList = document.getElementById('topicsList');
         const topicsHeader = document.getElementById('topicsHeader');
         const levelDescription = document.getElementById('levelDescription');
-        
+        const startPrepBtn = document.getElementById('startPrepBtn');
+
         // Level buttons
         const beginnerBtn = document.getElementById('beginnerBtn');
         const mediumBtn = document.getElementById('mediumBtn');
         const advancedBtn = document.getElementById('advancedBtn');
-        
+
+        // Get elements for timer
+        const timerDisplay = document.getElementById('timerDisplay');
+        const startTimerBtn = document.getElementById('startTimerBtn');
+        const pauseTimerBtn = document.getElementById('pauseTimerBtn');
+        const resetTimerBtn = document.getElementById('resetTimerBtn');
+        const prepTimeInput = document.getElementById('prepTime');
+        const talkTimeInput = document.getElementById('talkTime');
+        const timerStatus = document.getElementById('timerStatus');
+
         // Current level and topics
         let currentLevel = 'beginner';
         let currentTopics = topicsByLevel[currentLevel];
-        
+        let currentTopic = '';
+
+        // Timer variables
+        let timer;
+        let timerRunning = false;
+        let timerPaused = false;
+        let timeLeft = 0;
+        let timerMode = 'prep'; // 'prep' or 'talk'
+
         // Display topics for the current level
         function displayTopics() {
             topicsList.innerHTML = '';
             topicsHeader.textContent = `${currentLevel.charAt(0).toUpperCase() + currentLevel.slice(1)} Topics:`;
-            
+
             currentTopics.forEach((topic, index) => {
                 const topicElement = document.createElement('div');
                 topicElement.classList.add('topic');
@@ -237,30 +364,55 @@
                 topicElement.id = `topic-${index + 1}`;
                 topicsList.appendChild(topicElement);
             });
+
+            // Update talk time based on level
+            talkTimeInput.value = levelTimes[currentLevel];
         }
-        
+
         // Initialize with beginner topics
         displayTopics();
-        
+
+        // Tab functionality
+        function openTab(evt, tabName) {
+            // Declare all variables
+            let i, tabcontent, tablinks;
+
+            // Get all elements with class="tabcontent" and hide them
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+
+            // Get all elements with class="tablinks" and remove the class "active"
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+
+            // Show the current tab, and add an "active" class to the button that opened the tab
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
         // Level selection handlers
         beginnerBtn.addEventListener('click', () => {
             setActiveLevel('beginner');
         });
-        
+
         mediumBtn.addEventListener('click', () => {
             setActiveLevel('medium');
         });
-        
+
         advancedBtn.addEventListener('click', () => {
             setActiveLevel('advanced');
         });
-        
+
         function setActiveLevel(level) {
             // Update active button
             [beginnerBtn, mediumBtn, advancedBtn].forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (level === 'beginner') {
                 beginnerBtn.classList.add('active');
             } else if (level === 'medium') {
@@ -268,59 +420,60 @@
             } else if (level === 'advanced') {
                 advancedBtn.classList.add('active');
             }
-            
+
             // Update current level and topics
             currentLevel = level;
             currentTopics = topicsByLevel[level];
             levelDescription.textContent = levelDescriptions[level];
-            
+
             // Reset display
             numberDisplay.textContent = '?';
-            
+
             // Update topics list
             displayTopics();
         }
-        
+
         // Pick a random number function
         function pickRandomNumber() {
             // Disable the button temporarily
             pickButton.disabled = true;
-            
+
             // Start with a question mark
             numberDisplay.textContent = "?";
-            
+
             // Remove any existing selection
             const selectedTopic = document.querySelector('.topic.selected');
             if (selectedTopic) {
                 selectedTopic.classList.remove('selected');
             }
-            
+
             // Create a "spinning" effect with multiple numbers
             let counter = 0;
             const maxIterations = 20;
             const interval = setInterval(() => {
                 const randomNum = Math.floor(Math.random() * currentTopics.length) + 1;
                 numberDisplay.textContent = randomNum;
-                
+
                 counter++;
                 if (counter >= maxIterations) {
                     clearInterval(interval);
-                    
+
                     // Get final number
                     const finalNumber = parseInt(numberDisplay.textContent);
-                    
+                    currentTopic = currentTopics[finalNumber - 1];
+
                     // Add animation class
                     numberDisplay.classList.add('animation');
-                    
+
                     // Highlight the selected topic
                     const selectedTopicElement = document.getElementById(`topic-${finalNumber}`);
                     if (selectedTopicElement) {
                         selectedTopicElement.classList.add('selected');
-                        
+
                         // Scroll to the selected topic
                         selectedTopicElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
-                    
+
                     // Re-enable the button after animation
                     setTimeout(() => {
                         pickButton.disabled = false;
@@ -329,9 +482,145 @@
                 }
             }, 50);
         }
-        
-        // Add event listener to the button
+
+        // Format time function (convert seconds to MM:SS)
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Start timer function
+        function startTimer(mode) {
+            if (timerRunning && !timerPaused) return;
+
+            if (!timerPaused) {
+                // New timer start
+                timerMode = mode;
+                if (mode === 'prep') {
+                    timeLeft = parseInt(prepTimeInput.value);
+                    timerStatus.textContent = "Preparation time - get ready!";
+                    timerDisplay.style.color = "#FF9500"; // Orange for prep
+                } else {
+                    timeLeft = parseInt(talkTimeInput.value);
+                    timerStatus.textContent = `Talk time - Topic: ${currentTopic}`;
+                    timerDisplay.style.color = "#0066cc"; // Blue for talk
+                }
+            }
+
+            timerRunning = true;
+            timerPaused = false;
+            timerDisplay.textContent = formatTime(timeLeft);
+
+            startTimerBtn.disabled = true;
+            pauseTimerBtn.disabled = false;
+
+            // Start countdown
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = formatTime(timeLeft);
+
+                // Visual indicator when time is running out
+                if (timeLeft <= 10) {
+                    timerDisplay.classList.add('pulse');
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timerRunning = false;
+                    timerDisplay.classList.remove('pulse');
+
+                    // Play sound when timer ends
+                    const audio = new Audio('data:audio/wav;base64,//uQRAAAAWMSLwUIYAAsYkXgoQwAEaYLWfkWgAI0wWs/ItAAAGDgYtAgAyN+QWaAAihwMWm4G8QQRDiMcCBcH3Cc+CDv/7xA4Tvh9Rz/y8QADBwMWgQAZG/ILNAARQ4GLTcDeIIIhxGOBAuD7hOfBB3/94gcJ3w+o5/5eIAIAAAVwWgQAVQ2ORaIQwEMAJiDg95G4nQL7mQVWI6GwRcfsZAcsKkJvxgxEjzFUgfHoSQ9Qq7KNwqHwuB13MA4a1q/DmBrHgPcmjiGoh//EwC5nGPEmS4RcfkVKOhJf+WOgoxJclFz3kgn//dBA+ya1GhurNn8zb//9NNutNuhz31f////9vt///z+IdAEAAAK4LQIAKobHItEIYCGAExBwe8jcToF9zIKrEdDYIuP2MgOWFSE34wYiR5iqQPj0JIeoVdlG4VD4XA67mAcNa1fhzA1jwHuTRxDUQ//iYBczjHiTJcIuPyKlHQkv/LHQUYkuSi57yQT//uggfZNajQ3Vm//lQT//uggfZNajQ3Vm//lQT//uggfZNajQ3Vm//lQT//uggfZNajQ3Vm//lQT//uggfZNajQ3Vm//lQT//uggfZNajQ3Vm//lQT//uggfZNajQ3Vm//lQT//uggfZNajQ3Vm//lQT//uggfZNajQ3Vm//lQT//uggfZNajQ3Vm//lQT//uggfZNajQ3Vm//lQQ==');
+                    audio.play();
+
+                    // If prep timer ended, offer to start talk timer
+                    if (timerMode === 'prep') {
+                        timerStatus.textContent = "Prep time finished! Ready to start your talk?";
+                        startTimerBtn.textContent = "Start Talk";
+                        startTimerBtn.disabled = false;
+                        pauseTimerBtn.disabled = true;
+                        timerMode = 'talk';
+                    } else {
+                        timerStatus.textContent = "Time's up! Talk completed.";
+                        startTimerBtn.textContent = "Start";
+                        startTimerBtn.disabled = false;
+                        pauseTimerBtn.disabled = true;
+                        timerMode = 'prep';
+                    }
+                }
+            }, 1000);
+        }
+
+        // Pause timer function
+        function pauseTimer() {
+            if (!timerRunning) return;
+
+            clearInterval(timer);
+            timerPaused = true;
+            pauseTimerBtn.disabled = true;
+            startTimerBtn.disabled = false;
+            startTimerBtn.textContent = "Resume";
+            timerStatus.textContent = "Timer paused";
+        }
+
+        // Reset timer function
+        function resetTimer() {
+            clearInterval(timer);
+            timerRunning = false;
+            timerPaused = false;
+
+            if (timerMode === 'prep') {
+                timeLeft = parseInt(prepTimeInput.value);
+                timerStatus.textContent = "Ready to start preparation time";
+            } else {
+                timeLeft = parseInt(talkTimeInput.value);
+                timerStatus.textContent = "Ready to start talk time";
+            }
+
+            timerDisplay.textContent = formatTime(timeLeft);
+            timerDisplay.classList.remove('pulse');
+            startTimerBtn.disabled = false;
+            pauseTimerBtn.disabled = true;
+            startTimerBtn.textContent = "Start";
+        }
+
+        // Start prep timer from topic tab
+        startPrepBtn.addEventListener('click', () => {
+            // Switch to timer tab
+            document.querySelector('.tablinks:nth-child(2)').click();
+
+            // Set timer to prep mode
+            timerMode = 'prep';
+            resetTimer();
+            startTimer('prep');
+        });
+
+        // Timer control event listeners
+        startTimerBtn.addEventListener('click', () => {
+            startTimer(timerMode);
+        });
+
+        pauseTimerBtn.addEventListener('click', pauseTimer);
+        resetTimerBtn.addEventListener('click', resetTimer);
+
+        // Add event listener to the pick button
         pickButton.addEventListener('click', pickRandomNumber);
+
+        // Update timer when input changes
+        prepTimeInput.addEventListener('change', () => {
+            if (!timerRunning && timerMode === 'prep') {
+                timeLeft = parseInt(prepTimeInput.value);
+                timerDisplay.textContent = formatTime(timeLeft);
+            }
+        });
+
+        talkTimeInput.addEventListener('change', () => {
+            if (!timerRunning && timerMode === 'talk') {
+                timeLeft = parseInt(talkTimeInput.value);
+                timerDisplay.textContent = formatTime(timeLeft);
+            }
+        });
     </script>
 </body>
 </html>
